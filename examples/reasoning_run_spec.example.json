@@ -1,0 +1,199 @@
+{
+  "meta": {
+    "run_id": "RUN-EXAMPLE-2026-01-05-001",
+    "version": "1.0",
+    "purpose": "Example runtime spec combining HeadAgentSpec + RPMPhaseSpec + DeadlockSpec into a single object for LLM attachment / execution.",
+    "note": "This is an illustrative example. It contains no private scoring formulas (SPI/ASPI) and no hidden prompts."
+  },
+
+  "input": {
+    "raw_user_input": "We need to decide between Option A and Option B for our program next year. Option A is safer short-term but may lock us into a path. Option B is riskier short-term but could create long-term advantages. How should we decide?",
+    "domain_hint": "strategy_decision"
+  },
+
+  "head_agent_output": {
+    "problem_id": "PRB-EX-HEAD-001",
+    "input_summary": "The user is deciding between a safer short-term option and a riskier option with potential long-term advantages, under uncertainty about future impacts.",
+    "intent_profile": {
+      "primary_intent": "decision",
+      "decision_pressure": "high",
+      "time_horizon": "long"
+    },
+    "problem_frame": {
+      "problem_type": "tradeoff",
+      "core_question": "Which option better balances short-term feasibility with long-term adaptability under uncertainty?",
+      "decision_space": ["Option A", "Option B"]
+    },
+    "constraints": [
+      {
+        "constraint_type": "resource",
+        "description": "Limited team capacity and budget"
+      },
+      {
+        "constraint_type": "temporal",
+        "description": "A decision is needed soon for next-year planning"
+      }
+    ],
+    "unknowns": [
+      "How the external environment will change over the next 12–24 months",
+      "Second-order effects on stakeholders",
+      "Reversibility costs if the chosen option fails"
+    ],
+    "assumptions": [
+      "Option A reduces short-term risk",
+      "Option B increases variance but may improve long-term outcomes",
+      "Lock-in risk is a central factor in long-term stability"
+    ],
+    "stakes": {
+      "impact_scope": "organizational",
+      "reversibility": "partially_reversible"
+    },
+    "output_expectation": {
+      "format": "comparison",
+      "depth": "detailed"
+    }
+  },
+
+  "rpm_state": {
+    "run_id": "RUN-EXAMPLE-2026-01-05-001",
+    "current_phase": "RELATION",
+    "phase_stack": ["CONCEPT", "RELATION"],
+
+    "phase_outputs": {
+      "CONCEPT": {
+        "term_map": {
+          "safer_short_term": "lower variance in near-term execution outcomes",
+          "lock_in": "reduced future optionality due to commitments and sunk costs",
+          "long_term_advantage": "potential compounding benefits if conditions align"
+        },
+        "assumption_list": [
+          "Short-term safety is measurable",
+          "Lock-in reduces future adaptability"
+        ],
+        "concept_boundaries": [
+          "Separate 'risk' (variance) from 'loss' (downside magnitude)",
+          "Separate 'optionality' from 'speed'"
+        ]
+      },
+
+      "RELATION": {
+        "relation_graph_summary": [
+          "Option A → increases execution reliability → may reduce experimentation → increases lock-in probability",
+          "Option B → increases experimentation → may increase short-term failure probability → may increase long-term learning and optionality"
+        ],
+        "coupling_points": [
+          "Budget constraint couples with experimentation capacity",
+          "Stakeholder tolerance couples with short-term volatility"
+        ],
+        "conflict_pairs": [
+          "Reliability vs Optionality",
+          "Speed vs Learning"
+        ]
+      }
+    },
+
+    "transition_intent": {
+      "candidate_next_phase": "STRUCTURE",
+      "trigger": "relations_mapped",
+      "guards_met": ["coupling_points_identified"],
+      "guards_missing": []
+    },
+
+    "deadlock_hooks": {
+      "when_to_detect": ["RELATION", "STRUCTURE", "HORIZON"],
+      "last_detection": {
+        "phase": "RELATION",
+        "result": "deadlock_detected"
+      }
+    },
+
+    "deadlock_spec": {
+      "deadlock_id": "DLK-EX-001",
+      "context": {
+        "domain": "strategy_decision",
+        "task_type": "decision",
+        "stage": "option_comparison"
+      },
+      "signals": {
+        "logical_tension": "medium",
+        "information_gap": "partial",
+        "conceptual_blur": "ambiguous",
+        "constraint_pressure": "tight"
+      },
+      "topological_signature": {
+        "dominant_feature": "H1_loop",
+        "notes": "The reasoning cycles between Option A vs Option B without producing a decisive criterion under uncertainty."
+      },
+      "severity_profile": {
+        "persistence": "stable",
+        "risk": "high"
+      },
+      "routing_hints": {
+        "preferred_agents": ["Assumption_Breaker", "Antagonist"],
+        "forbidden_strategies": ["direct_answer_generation", "single-path_optimization"]
+      },
+      "remarks": "This is a classic comparison loop under uncertainty. Break implicit assumptions and stress-test decision criteria before recommending."
+    },
+
+    "routing_decision": {
+      "policy_basis": "phase_x_topology",
+      "phase": "RELATION",
+      "topology": "H1_loop",
+      "selected_agents": [
+        {
+          "agent": "Assumption_Breaker",
+          "objective": "Identify and challenge the hidden assumption that a single global criterion can decide under deep uncertainty."
+        },
+        {
+          "agent": "Antagonist",
+          "objective": "Stress-test both options against adversarial scenarios and failure modes."
+        }
+      ]
+    },
+
+    "loop_control": {
+      "max_cycles": 6,
+      "current_cycle": 2,
+      "reentry_policy": "phase_stack_backtrack",
+      "stop_conditions": ["crux_resolved", "no_deadlock_signal", "output_ready"]
+    },
+
+    "trace": {
+      "phase_events": [
+        {
+          "phase": "CONCEPT",
+          "event": "enter_phase",
+          "note": "Stabilize key terms and minimal question."
+        },
+        {
+          "phase": "CONCEPT",
+          "event": "exit_phase",
+          "note": "Key terms defined; minimal question confirmed."
+        },
+        {
+          "phase": "RELATION",
+          "event": "enter_phase",
+          "note": "Map dependencies, couplings, and conflict pairs."
+        },
+        {
+          "phase": "RELATION",
+          "event": "deadlock_detected",
+          "note": "H1 loop suspected: repeated A vs B comparison without decisive criterion."
+        },
+        {
+          "phase": "RELATION",
+          "event": "agent_routed",
+          "note": "Route to Assumption_Breaker + Antagonist per phase_x_topology policy."
+        }
+      ]
+    }
+  },
+
+  "expected_next_steps": [
+    "Run Assumption_Breaker to surface hidden premises and propose alternative decision frames (e.g., reversibility-first).",
+    "Run Antagonist to create adversarial scenarios and identify brittle criteria.",
+    "Move to STRUCTURE phase to construct a decision topology: regimes, thresholds, and case splits.",
+    "If still stagnant, enter HORIZON to propose phase shifts (inversion, analogy mapping).",
+    "Only then generate a recommendation aligned with structured reasoning."
+  ]
+}

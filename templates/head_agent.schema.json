@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HeadAgentSpec",
+  "description": "Problem-structuring specification produced by the Head Agent in the C-Frame reasoning pipeline. This schema defines how raw input is transformed into a structured reasoning object before phase-based processing.",
+  "type": "object",
+  "required": [
+    "problem_id",
+    "input_summary",
+    "intent_profile",
+    "problem_frame",
+    "constraints",
+    "unknowns",
+    "assumptions",
+    "stakes",
+    "output_expectation"
+  ],
+  "properties": {
+    "problem_id": {
+      "type": "string",
+      "description": "Unique identifier for the reasoning instance",
+      "example": "PRB-2025-08-HEAD-001"
+    },
+
+    "input_summary": {
+      "type": "string",
+      "description": "Neutral, compressed restatement of the user's input without interpretation",
+      "example": "The user is comparing two policy options under uncertain long-term impacts."
+    },
+
+    "intent_profile": {
+      "type": "object",
+      "description": "Interpreted intent behind the input (non-evaluative)",
+      "required": ["primary_intent", "decision_pressure", "time_horizon"],
+      "properties": {
+        "primary_intent": {
+          "type": "string",
+          "enum": ["understanding", "comparison", "decision", "generation", "evaluation"],
+          "example": "decision"
+        },
+        "decision_pressure": {
+          "type": "string",
+          "enum": ["low", "medium", "high"],
+          "description": "Perceived urgency or pressure to decide",
+          "example": "high"
+        },
+        "time_horizon": {
+          "type": "string",
+          "enum": ["short", "mid", "long"],
+          "description": "Temporal horizon implied by the problem",
+          "example": "long"
+        }
+      }
+    },
+
+    "problem_frame": {
+      "type": "object",
+      "description": "Core structure of the problem as identified by the Head Agent",
+      "required": ["problem_type", "core_question", "decision_space"],
+      "properties": {
+        "problem_type": {
+          "type": "string",
+          "enum": ["tradeoff", "optimization", "diagnosis", "design", "strategy"],
+          "example": "tradeoff"
+        },
+        "core_question": {
+          "type": "string",
+          "description": "The minimal question that must be resolved",
+          "example": "Which option better balances short-term feasibility and long-term stability?"
+        },
+        "decision_space": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Explicit options or directions under consideration",
+          "example": ["Option A", "Option B"]
+        }
+      }
+    },
+
+    "constraints": {
+      "type": "array",
+      "description": "Known constraints limiting the solution space",
+      "items": {
+        "type": "object",
+        "required": ["constraint_type", "description"],
+        "properties": {
+          "constraint_type": {
+            "type": "string",
+            "enum": ["resource", "ethical", "legal", "temporal", "organizational"],
+            "example": "resource"
+          },
+          "description": {
+            "type": "string",
+            "example": "Limited budget and manpower"
+          }
+        }
+      }
+    },
+
+    "unknowns": {
+      "type": "array",
+      "description": "Explicitly identified unknowns or missing information",
+      "items": {
+        "type": "string"
+      },
+      "example": [
+        "Long-term economic impact",
+        "Secondary effects on stakeholders"
+      ]
+    },
+
+    "assumptions": {
+      "type": "array",
+      "description": "Implicit assumptions inferred from the input",
+      "items": {
+        "type": "string"
+      },
+      "example": [
+        "Short-term success correlates with long-term stability",
+        "Stakeholder behavior remains constant"
+      ]
+    },
+
+    "stakes": {
+      "type": "object",
+      "description": "Consequences if the decision or reasoning fails",
+      "required": ["impact_scope", "reversibility"],
+      "properties": {
+        "impact_scope": {
+          "type": "string",
+          "enum": ["personal", "organizational", "societal"],
+          "example": "organizational"
+        },
+        "reversibility": {
+          "type": "string",
+          "enum": ["reversible", "partially_reversible", "irreversible"],
+          "example": "partially_reversible"
+        }
+      }
+    },
+
+    "output_expectation": {
+      "type": "object",
+      "description": "What kind of output is appropriate before any reasoning begins",
+      "required": ["format", "depth"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["analysis", "comparison", "recommendation", "scenario_mapping"],
+          "example": "comparison"
+        },
+        "depth": {
+          "type": "string",
+          "enum": ["overview", "detailed", "exploratory"],
+          "example": "detailed"
+        }
+      }
+    }
+  }
+}

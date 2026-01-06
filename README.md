@@ -182,7 +182,14 @@ It is about making them:
 This repository demonstrates how reasoning itself can be **designed, constrained, and audited**.
 
 ---
+### Minimal Demo Walkthrough
+1. Attach `head_agent.schema.json` and `rpm_phase.schema.json` to your LLM.
+2. Paste the System Prompt from this README.
+3. Provide your question as user input.
+4. Observe structured phase transitions instead of immediate answers.
+5. Compare results with and without the schemas.
 
+---
 ## License
 
 MIT License

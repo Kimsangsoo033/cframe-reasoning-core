@@ -1,0 +1,434 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RPMPhaseSpec",
+  "description": "Relational Perspective Manager (RPM) phase-transition specification for C-Frame. Defines a 4-phase reasoning state machine (Concept → Relation → Structure → Horizon) including entry criteria, deadlock hooks, agent routing hints, and loop control.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "current_phase",
+    "phase_stack",
+    "phase_definitions",
+    "transition_rules",
+    "deadlock_hooks",
+    "routing_policy",
+    "loop_control",
+    "trace"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier for this reasoning run",
+      "example": "RUN-RPM-2025-08-001"
+    },
+
+    "current_phase": {
+      "type": "string",
+      "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"],
+      "description": "The phase currently active",
+      "example": "RELATION"
+    },
+
+    "phase_stack": {
+      "type": "array",
+      "description": "Stack of visited phases for controlled backtracking",
+      "items": {
+        "type": "string",
+        "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+      },
+      "example": ["CONCEPT", "RELATION"]
+    },
+
+    "phase_definitions": {
+      "type": "object",
+      "description": "Definitions of the 4 phases with objectives and outputs",
+      "required": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"],
+      "properties": {
+        "CONCEPT": {
+          "type": "object",
+          "required": ["goal", "core_questions", "outputs"],
+          "properties": {
+            "goal": {
+              "type": "string",
+              "example": "Clarify and stabilize the key concepts, terms, and the minimal question."
+            },
+            "core_questions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "What is the minimal question?",
+                "Which terms are ambiguous or overloaded?",
+                "What is assumed vs. given?"
+              ]
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "term_map",
+                "assumption_list",
+                "concept_boundaries"
+              ]
+            }
+          }
+        },
+
+        "RELATION": {
+          "type": "object",
+          "required": ["goal", "core_questions", "outputs"],
+          "properties": {
+            "goal": {
+              "type": "string",
+              "example": "Map causal, dependency, and stakeholder relations; surface hidden couplings."
+            },
+            "core_questions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "What depends on what?",
+                "Where does a change propagate?",
+                "Which relations are assumed linear but may be nonlinear?"
+              ]
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "relation_graph",
+                "coupling_points",
+                "conflict_pairs"
+              ]
+            }
+          }
+        },
+
+        "STRUCTURE": {
+          "type": "object",
+          "required": ["goal", "core_questions", "outputs"],
+          "properties": {
+            "goal": {
+              "type": "string",
+              "example": "Construct the global structure: constraints, regimes, cases, and decision topology."
+            },
+            "core_questions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "What are the governing constraints and regimes?",
+                "Which case splits are necessary?",
+                "Where is the solution space fragmented or over-constrained?"
+              ]
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "case_structure",
+                "constraint_matrix",
+                "decision_topology"
+              ]
+            }
+          }
+        },
+
+        "HORIZON": {
+          "type": "object",
+          "required": ["goal", "core_questions", "outputs"],
+          "properties": {
+            "goal": {
+              "type": "string",
+              "example": "Shift perspectives: invert assumptions, analogize domains, and propose phase transitions."
+            },
+            "core_questions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "What assumption could be inverted?",
+                "What analogous structure exists in another domain?",
+                "What phase shift would dissolve the deadlock?"
+              ]
+            },
+            "outputs": {
+              "type": "array",
+              "items": { "type": "string" },
+              "example": [
+                "inversion_candidates",
+                "analogy_maps",
+                "phase_shift_plan"
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "transition_rules": {
+      "type": "array",
+      "description": "Rules controlling phase transitions (guarded state machine). No scoring formulas exposed.",
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "trigger", "guard", "on_enter", "on_exit"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+          },
+          "to": {
+            "type": "string",
+            "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+          },
+          "trigger": {
+            "type": "string",
+            "description": "High-level event that suggests moving phases",
+            "example": "concepts_stabilized"
+          },
+          "guard": {
+            "type": "array",
+            "description": "Qualitative guards that must hold to proceed",
+            "items": { "type": "string" },
+            "example": [
+              "key_terms_defined",
+              "minimal_question_confirmed"
+            ]
+          },
+          "on_enter": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Actions to perform when entering the phase",
+            "example": ["generate_relation_graph"]
+          },
+          "on_exit": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Actions to perform when exiting the phase",
+            "example": ["snapshot_phase_outputs"]
+          }
+        }
+      },
+      "example": [
+        {
+          "from": "CONCEPT",
+          "to": "RELATION",
+          "trigger": "concepts_stabilized",
+          "guard": ["key_terms_defined", "minimal_question_confirmed"],
+          "on_enter": ["map_dependencies", "surface_hidden_couplings"],
+          "on_exit": ["snapshot_phase_outputs"]
+        },
+        {
+          "from": "RELATION",
+          "to": "STRUCTURE",
+          "trigger": "relations_mapped",
+          "guard": ["coupling_points_identified"],
+          "on_enter": ["build_case_structure", "assemble_constraint_matrix"],
+          "on_exit": ["snapshot_phase_outputs"]
+        },
+        {
+          "from": "STRUCTURE",
+          "to": "HORIZON",
+          "trigger": "structure_stagnating_or_overconstrained",
+          "guard": ["deadlock_signal_present"],
+          "on_enter": ["propose_inversions", "search_cross_domain_analogies"],
+          "on_exit": ["snapshot_phase_outputs"]
+        },
+        {
+          "from": "HORIZON",
+          "to": "STRUCTURE",
+          "trigger": "candidate_phase_shift_ready",
+          "guard": ["phase_shift_plan_written"],
+          "on_enter": ["apply_phase_shift_plan"],
+          "on_exit": ["snapshot_phase_outputs"]
+        }
+      ]
+    },
+
+    "deadlock_hooks": {
+      "type": "object",
+      "description": "Integration points for DeadlockSpec creation and topological signature updates",
+      "required": ["when_to_detect", "outputs"],
+      "properties": {
+        "when_to_detect": {
+          "type": "array",
+          "description": "Phases where deadlock detection is recommended",
+          "items": {
+            "type": "string",
+            "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+          },
+          "example": ["RELATION", "STRUCTURE", "HORIZON"]
+        },
+        "outputs": {
+          "type": "array",
+          "description": "Artifacts produced when deadlock is detected",
+          "items": { "type": "string" },
+          "example": ["deadlock_spec", "topological_signature", "crux_candidates"]
+        }
+      }
+    },
+
+    "routing_policy": {
+      "type": "object",
+      "description": "High-level policy for routing to sub-agents based on phase + deadlock signature",
+      "required": ["rules"],
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["if", "then"],
+            "properties": {
+              "if": {
+                "type": "object",
+                "required": ["phase", "topology"],
+                "properties": {
+                  "phase": {
+                    "type": "string",
+                    "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+                  },
+                  "topology": {
+                    "type": "string",
+                    "enum": ["H0_fragmentation", "H1_loop", "H2_cavity", "unknown"]
+                  }
+                }
+              },
+              "then": {
+                "type": "object",
+                "required": ["preferred_agents", "avoid"],
+                "properties": {
+                  "preferred_agents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "Innovator",
+                        "Antagonist",
+                        "Assumption_Breaker",
+                        "Change_Modeler"
+                      ]
+                    }
+                  },
+                  "avoid": {
+                    "type": "array",
+                    "items": { "type": "string" },
+                    "example": ["direct_answer_generation"]
+                  }
+                }
+              }
+            }
+          },
+          "example": [
+            {
+              "if": { "phase": "CONCEPT", "topology": "H0_fragmentation" },
+              "then": {
+                "preferred_agents": ["Innovator"],
+                "avoid": ["premature_recommendation"]
+              }
+            },
+            {
+              "if": { "phase": "RELATION", "topology": "H1_loop" },
+              "then": {
+                "preferred_agents": ["Antagonist", "Assumption_Breaker"],
+                "avoid": ["single_path_optimization"]
+              }
+            },
+            {
+              "if": { "phase": "STRUCTURE", "topology": "H2_cavity" },
+              "then": {
+                "preferred_agents": ["Change_Modeler", "Innovator"],
+                "avoid": ["local_fix_only"]
+              }
+            }
+          ]
+        }
+      }
+    },
+
+    "loop_control": {
+      "type": "object",
+      "description": "Controls for iterative re-entry and bounded reasoning cycles",
+      "required": ["max_cycles", "reentry_policy", "stop_conditions"],
+      "properties": {
+        "max_cycles": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20,
+          "example": 6
+        },
+        "reentry_policy": {
+          "type": "string",
+          "enum": ["phase_stack_backtrack", "restart_from_concept", "targeted_patch"],
+          "description": "How RPM re-enters earlier phases",
+          "example": "phase_stack_backtrack"
+        },
+        "stop_conditions": {
+          "type": "array",
+          "description": "Qualitative conditions for stopping the loop",
+          "items": { "type": "string" },
+          "example": [
+            "crux_resolved",
+            "no_deadlock_signal",
+            "output_ready"
+          ]
+        }
+      }
+    },
+
+    "trace": {
+      "type": "object",
+      "description": "Minimal trace fields for reproducibility (no private prompts exposed)",
+      "required": ["phase_outputs", "phase_events"],
+      "properties": {
+        "phase_outputs": {
+          "type": "object",
+          "description": "Artifacts produced per phase (high level only)",
+          "properties": {
+            "CONCEPT": { "type": "object" },
+            "RELATION": { "type": "object" },
+            "STRUCTURE": { "type": "object" },
+            "HORIZON": { "type": "object" }
+          },
+          "example": {
+            "CONCEPT": {
+              "term_map": { "impact": "ambiguous", "stability": "context-dependent" },
+              "assumption_list": ["Assumption A", "Assumption B"]
+            },
+            "RELATION": {
+              "relation_graph": "graph_ref_or_inline_summary",
+              "coupling_points": ["Coupling 1", "Coupling 2"]
+            }
+          }
+        },
+        "phase_events": {
+          "type": "array",
+          "description": "Logged events describing transitions and detections",
+          "items": {
+            "type": "object",
+            "required": ["phase", "event", "note"],
+            "properties": {
+              "phase": {
+                "type": "string",
+                "enum": ["CONCEPT", "RELATION", "STRUCTURE", "HORIZON"]
+              },
+              "event": {
+                "type": "string",
+                "enum": [
+                  "enter_phase",
+                  "exit_phase",
+                  "deadlock_detected",
+                  "agent_routed",
+                  "phase_shift_proposed",
+                  "phase_shift_applied"
+                ]
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          },
+          "example": [
+            { "phase": "CONCEPT", "event": "enter_phase", "note": "Stabilize terms and minimal question." },
+            { "phase": "RELATION", "event": "deadlock_detected", "note": "H1 loop suspected: repeated comparison without progress." },
+            { "phase": "HORIZON", "event": "phase_shift_proposed", "note": "Propose inversion on key assumption and cross-domain analogy." }
+          ]
+        }
+      }
+    }
+  }
+}

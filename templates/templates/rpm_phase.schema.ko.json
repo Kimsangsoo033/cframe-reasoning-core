@@ -1,0 +1,159 @@
+{
+  "title": "RPMPhaseSpec (Korean Explanation)",
+  "purpose": "RPM(Relational Perspective Manager)이 추론을 4단계(개념→관계→구조→지평)로 전이시키는 상태기계(state machine) 스키마의 한글 설명 파일",
+  "core_claim": "추론은 텍스트 생성이 아니라 '단계 전이(phase transition)'이며, RPM은 전이를 통제하고 데드락을 감지하며 에이전트를 라우팅한다.",
+  "design_notes": {
+    "what_it_is": [
+      "4단계 사고 전이 규칙(상태기계)",
+      "전이 조건(guards) 기반의 단계 이동",
+      "데드락 탐지 훅 + 위상 시그니처(H0/H1/H2) 갱신",
+      "phase×topology 기반 서브에이전트 라우팅 정책",
+      "반복/재진입(loop)을 제한하는 제어장치"
+    ],
+    "what_it_is_not": [
+      "정답 생성기",
+      "점수 계산기(SPI/ASPI 수식 포함하지 않음)",
+      "프롬프트 원문 공개(Trace는 최소 로그만)"
+    ]
+  },
+
+  "field_explanations": {
+    "run_id": "이 추론 실행 세션의 고유 ID(로그/재현성 추적용)",
+    "current_phase": "현재 활성화된 사고 단계(CONCEPT/RELATION/STRUCTURE/HORIZON)",
+    "phase_stack": "방문한 단계를 스택으로 기록하여, 필요 시 통제된 backtracking을 가능하게 함",
+
+    "phase_definitions": {
+      "CONCEPT": {
+        "goal": "핵심 개념·용어·최소 질문을 안정화한다(모호성 제거, 경계 설정).",
+        "core_questions": [
+          "최소 질문은 무엇인가?",
+          "어떤 용어가 다의적/과적재되어 있는가?",
+          "주어진 것과 가정된 것은 무엇인가?"
+        ],
+        "outputs": [
+          "term_map(용어 맵)",
+          "assumption_list(전제 목록)",
+          "concept_boundaries(개념 경계)"
+        ],
+        "failure_modes": [
+          "용어 불명확으로 인해 이후 단계에서 논점이 흔들림",
+          "최소 질문이 확정되지 않아 관계/구조 단계가 산만해짐"
+        ]
+      },
+      "RELATION": {
+        "goal": "인과·의존·이해관계 관계를 맵핑하고 숨은 결합(coupling)을 드러낸다.",
+        "core_questions": [
+          "무엇이 무엇에 의존하는가?",
+          "변화가 어디로 전파되는가?",
+          "선형으로 가정된 관계가 비선형일 수 있는 지점은?"
+        ],
+        "outputs": [
+          "relation_graph(관계 그래프)",
+          "coupling_points(결합 지점)",
+          "conflict_pairs(충돌 쌍)"
+        ],
+        "failure_modes": [
+          "관계를 나열만 하고 구조적 결합을 못 잡음",
+          "반복 비교 루프(H1)가 발생"
+        ]
+      },
+      "STRUCTURE": {
+        "goal": "전체 구조를 구성한다(제약·레짐·케이스 분기·결정 위상).",
+        "core_questions": [
+          "지배 제약과 레짐(regime)은 무엇인가?",
+          "필수 케이스 분기는 무엇인가?",
+          "해 공간이 분절(H0)되었는가, 과잉제약(H2)인가?"
+        ],
+        "outputs": [
+          "case_structure(케이스 구조)",
+          "constraint_matrix(제약 행렬)",
+          "decision_topology(결정 위상)"
+        ],
+        "failure_modes": [
+          "국소 해법만 만지다가 구조 정체",
+          "해 공간이 닫혀(과잉제약) 전환이 불가능"
+        ]
+      },
+      "HORIZON": {
+        "goal": "관점을 이동한다(전제 반전·도메인 유추·위상 전환 설계).",
+        "core_questions": [
+          "어떤 전제를 반전할 수 있는가?",
+          "다른 도메인에서 유사 구조는 무엇인가?",
+          "어떤 위상 전환(Φ)이 데드락을 해소하는가?"
+        ],
+        "outputs": [
+          "inversion_candidates(반전 후보)",
+          "analogy_maps(유추 맵)",
+          "phase_shift_plan(전환 계획)"
+        ],
+        "failure_modes": [
+          "아이디어 제안만 하고 구조에 적용되지 않음",
+          "전환 계획이 작성되지 않아 구조 단계로 재진입 불가"
+        ]
+      }
+    },
+
+    "transition_rules": {
+      "meaning": "단계 이동 규칙. trigger(전이 유발 이벤트) + guard(진행 조건)로 전이를 통제한다.",
+      "why_important": [
+        "무작정 답 생성 대신 단계적 사고를 강제",
+        "진행 조건을 만족하지 않으면 다음 단계로 넘어가지 않도록 통제"
+      ],
+      "fields": {
+        "from": "현재 단계",
+        "to": "이동할 단계",
+        "trigger": "전이를 고려하게 하는 상위 이벤트(예: concepts_stabilized)",
+        "guard": "전이 전에 반드시 만족해야 하는 조건(정성적 체크)",
+        "on_enter": "단계 진입 시 수행할 액션",
+        "on_exit": "단계 종료 시 스냅샷/로그 등 수행"
+      }
+    },
+
+    "deadlock_hooks": {
+      "meaning": "DeadlockSpec를 생성/갱신할 관문. 특정 단계에서 데드락 탐지를 수행하도록 권장한다.",
+      "when_to_detect": "데드락 탐지를 권장하는 단계 목록(보통 RELATION/STRUCTURE/HORIZON)",
+      "outputs": [
+        "deadlock_spec(데드락 스펙)",
+        "topological_signature(위상 시그니처)",
+        "crux_candidates(크럭스 후보)"
+      ]
+    },
+
+    "routing_policy": {
+      "meaning": "phase × topology(위상 패턴)에 따라 서브에이전트(혁신자/반대자/전제해체자/변화모델러)를 추천하는 정책",
+      "example_intuition": {
+        "CONCEPT + H0_fragmentation": "정보/개념 분절 → Innovator로 연결·가설 생성",
+        "RELATION + H1_loop": "반복 루프 → Antagonist/Assumption_Breaker로 섭동·전제 해체",
+        "STRUCTURE + H2_cavity": "과잉제약 공동 → Change_Modeler로 위상 전환 설계"
+      },
+      "note": "routing_policy는 '권고'이며, 최종 라우팅 결정권은 RPM 메타 로직에 있다."
+    },
+
+    "loop_control": {
+      "meaning": "반복/재진입을 무한 루프가 아닌 '제한된 루프'로 운영하기 위한 장치",
+      "fields": {
+        "max_cycles": "최대 반복 횟수",
+        "reentry_policy": "어떤 방식으로 이전 단계에 재진입할지(스택 backtrack/개념부터 재시작/타겟 패치)",
+        "stop_conditions": "루프 종료 조건(크럭스 해소, 데드락 신호 소멸, 출력 준비 등)"
+      }
+    },
+
+    "trace": {
+      "meaning": "재현성/디버깅을 위한 최소 로그. 프롬프트 원문이나 비공개 알고리즘은 포함하지 않는다.",
+      "phase_outputs": "단계별 산출물(상위 요약만)",
+      "phase_events": "단계 진입/종료, 데드락 탐지, 라우팅, 전환 제안/적용 등 이벤트 로그"
+    }
+  },
+
+  "recommended_repo_layout": {
+    "templates": [
+      "rpm_phase.schema.json (실행 기준)",
+      "rpm_phase.schema.ko.json (한글 설명)"
+    ],
+    "examples": [
+      "reasoning_run_spec.example.json (실행 합본 예시: Head + RPM + Deadlock)"
+    ]
+  },
+
+  "one_line_summary": "RPM은 추론을 4단계로 전이시키는 '상태기계'이며, 데드락을 감지하고 관점 전환을 설계해 System 2 추론을 강제한다."
+}
